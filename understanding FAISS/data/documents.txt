@@ -1,0 +1,10 @@
+Cats are domestic animals.
+Dogs are loyal pets.
+Machine learning uses data.
+Deep learning is a subset of AI.
+Football is a popular sport.
+Python is used in AI development.
+Delhi is the capital of India.
+Databases store information.
+Vector databases store embeddings.
+FAISS helps similarity search.

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RAG Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 780px;
+      height: 92vh;
+      background: #1a1d27;
+      border-radius: 20px;
+      border: 1px solid #2d3148;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Header */
+    .header {
+      padding: 18px 24px;
+      background: linear-gradient(135deg, #1e2235, #252a40);
+      border-bottom: 1px solid #2d3148;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header-text h1 { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; }
+    .header-text p  { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+    .status-dot {
+      width: 8px; height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-left: auto;
+      box-shadow: 0 0 6px #22c55e;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* Upload */
+    .upload-section {
+      padding: 14px 24px;
+      background: #1e2235;
+      border-bottom: 1px solid #2d3148;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .file-label {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      background: #252a40;
+      border: 1px dashed #3d4466;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      transition: all 0.2s;
+      flex: 1; min-width: 160px;
+    }
+    .file-label:hover { border-color: #6366f1; color: #a5b4fc; background: #2a2f4a; }
+    .file-label input { display: none; }
+    #file-name { font-size: 0.78rem; color: #64748b; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .upload-btn {
+      padding: 8px 18px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; border-radius: 8px;
+      color: #fff; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .upload-btn:hover { opacity: 0.85; }
+    #status {
+      width: 100%; font-size: 0.78rem;
+      padding: 6px 10px; border-radius: 6px;
+      display: none;
+    }
+    #status.success { background: #14532d33; color: #4ade80; display: block; }
+    #status.error   { background: #7f1d1d33; color: #f87171; display: block; }
+
+    /* Chat box */
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    #chat-box::-webkit-scrollbar { width: 5px; }
+    #chat-box::-webkit-scrollbar-track { background: transparent; }
+    #chat-box::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 10px; }
+
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #334155; gap: 10px; text-align: center;
+    }
+    .empty-state .icon { font-size: 3rem; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Messages */
+    .message { display: flex; gap: 10px; max-width: 85%; animation: fadeUp 0.25s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .message.bot  { align-self: flex-start; }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; margin-top: 2px;
+    }
+    .message.user .avatar { background: linear-gradient(135deg, #0ea5e9, #6366f1); }
+    .message.bot  .avatar { background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .message.user .bubble {
+      background: linear-gradient(135deg, #1d4ed8, #4f46e5);
+      color: #e0e7ff;
+      border-bottom-right-radius: 4px;
+    }
+    .message.bot .bubble {
+      background: #252a40;
+      color: #cbd5e1;
+      border: 1px solid #2d3148;
+      border-bottom-left-radius: 4px;
+    }
+
+    /* Typing indicator */
+    .typing .bubble { padding: 12px 16px; }
+    .typing-dots { display: flex; gap: 5px; }
+    .typing-dots span {
+      width: 7px; height: 7px;
+      background: #6366f1; border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%           { transform: translateY(-6px); }
+    }
+
+    /* Input row */
+    .input-area {
+      padding: 16px 24px;
+      background: #1e2235;
+      border-top: 1px solid #2d3148;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    #query {
+      flex: 1;
+      padding: 12px 16px;
+      background: #252a40;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      color: #e2e8f0;
+      font-size: 0.88rem;
+      font-family: 'Inter', sans-serif;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+      max-height: 120px;
+      line-height: 1.5;
+    }
+    #query::placeholder { color: #475569; }
+    #query:focus { border-color: #6366f1; }
+    .send-btn {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; border-radius: 12px;
+      color: #fff; font-size: 18px;
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: opacity 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover  { opacity: 0.85; }
+    .send-btn:active { transform: scale(0.95); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="header-icon">🤖</div>
+      <div class="header-text">
+        <h1>RAG Chat</h1>
+        <p>Ask questions about your documents</p>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+
+    <div class="upload-section">
+      <label class="file-label">
+        📎 Choose file
+        <input type="file" id="file-input" accept=".pdf,.txt" onchange="updateFileName(this)"/>
+      </label>
+      <span id="file-name">No file selected</span>
+      <button class="upload-btn" onclick="uploadFile()">Upload & Index</button>
+      <div id="status"></div>
+    </div>
+
+    <div id="chat-box">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">💬</div>
+        <p>Upload a document and start asking questions</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="query" rows="1" placeholder="Ask something about your document..."
+        oninput="autoResize(this)"
+        onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendQuery(); }">
+      </textarea>
+      <button class="send-btn" onclick="sendQuery()">➤</button>
+    </div>
+
+  </div>
+
+  <script>
+    function updateFileName(input) {
+      document.getElementById('file-name').textContent = input.files[0]?.name || 'No file selected';
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = type;
+    }
+
+    async function uploadFile() {
+      const file = document.getElementById('file-input').files[0];
+      if (!file) return setStatus('Please select a file first.', 'error');
+      setStatus('Uploading...', 'success');
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res  = await fetch('/upload', { method: 'POST', body: form });
+        const data = await res.json();
+        setStatus(data.message || data.error, data.error ? 'error' : 'success');
+      } catch {
+        setStatus('Upload failed. Try again.', 'error');
+      }
+    }
+
+    async function sendQuery() {
+      const input = document.getElementById('query');
+      const query = input.value.trim();
+      if (!query) return;
+
+      document.getElementById('empty-state')?.remove();
+      appendMessage('user', query);
+      input.value = '';
+      input.style.height = 'auto';
+
+      const typingId = appendTyping();
+
+      try {
+        const res  = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+        const data = await res.json();
+        removeTyping(typingId);
+        appendMessage('bot', data.answer || data.error);
+      } catch {
+        removeTyping(typingId);
+        appendMessage('bot', 'Something went wrong. Please try again.');
+      }
+    }
+
+    function appendMessage(role, text) {
+      const box = document.getElementById('chat-box');
+      const wrap = document.createElement('div');
+      wrap.className = `message ${role}`;
+      wrap.innerHTML = `
+        <div class="avatar">${role === 'user' ? '🧑' : '🤖'}</div>
+        <div class="bubble">${escapeHtml(text)}</div>`;
+      box.appendChild(wrap);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function appendTyping() {
+      const box = document.getElementById('chat-box');
+      const id  = 'typing-' + Date.now();
+      const wrap = document.createElement('div');
+      wrap.className = 'message bot typing';
+      wrap.id = id;
+      wrap.innerHTML = `
+        <div class="avatar">🤖</div>
+        <div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+      box.appendChild(wrap);
+      box.scrollTop = box.scrollHeight;
+      return id;
+    }
+
+    function removeTyping(id) {
+      document.getElementById(id)?.remove();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    }
+  </script>
+</body>
+</html>
