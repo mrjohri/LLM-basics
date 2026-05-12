@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LangGraph AI Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>LangGraph AI Research Agent</h1>
+        <input type="text" id="query" placeholder="Ask something...">
+        <button onclick="sendQuery()">Ask AI</button>
+        <div id="loading">Thinking...</div>
+        <div id="output"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

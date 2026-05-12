@@ -1,0 +1,7 @@
+body { background: #f4f4f4; font-family: Arial; }
+.container { width: 70%; margin: 40px auto; }
+h1 { color: #222; }
+input { width: 80%; padding: 12px; font-size: 16px; }
+button { padding: 12px; cursor: pointer; font-size: 16px; }
+#loading { margin-top: 20px; display: none; font-size: 18px; color: blue; }
+#output { margin-top: 20px; background: white; padding: 20px; border-radius: 10px; line-height: 1.7; font-size: 16px; }

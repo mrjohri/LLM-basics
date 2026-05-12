@@ -1,0 +1,5 @@
+body { font-family: Arial; background: #f4f4f4; }
+.container { width: 60%; margin: auto; margin-top: 50px; }
+input { width: 80%; padding: 10px; }
+button { padding: 10px; cursor: pointer; }
+#output { margin-top: 20px; background: white; padding: 20px; border-radius: 10px; }
